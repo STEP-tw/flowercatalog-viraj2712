@@ -3,32 +3,23 @@ const http = require('http');
 const WebApp = require('./webapp');
 let toS = o => JSON.stringify(o, null, 2);
 
+let comments = fs.readFileSync('data/comments.json', 'utf8');
+comments = JSON.parse(comments);
+
 let logRequest = (req, res) => {
   let text = ['------------------------------',
+    `${new Date().toLocaleTimeString()}`,
     `${req.method} ${req.url}`,
-    `HEADERS=> ${toS(req.headers)}`,
-    `BODY=> ${toS(req.body)}`, ''
   ].join('\n');
-  fs.appendFile('request.log', text, () => {});
-
-  console.log(`${req.method} ${req.url}`);
+  console.log(text);
 }
 
 let isGetMethod = function(req) {
   return req.method == 'GET';
 }
 
-let isFile = function(path){
+let isFile = function(path) {
   return fs.existsSync(path);
-}
-
-let serveFile = function(req, res) {
-  if(req.url == '/') req.url = '/index.html';
-  let path = './public' + req.url;
-  if (isGetMethod(req) && isFile(path)) {
-    res.write(fs.readFileSync(path));
-    res.end();
-  } else return;
 }
 
 const getContentType = function(fileName) {
@@ -44,9 +35,30 @@ const getContentType = function(fileName) {
   return extensions[fileExtension];
 };
 
+let serveFile = function(req, res) {
+  if (req.url == '/') req.url = '/index.html';
+  let path = './public' + req.url;
+  if (isGetMethod(req) && isFile(path)) {
+    let contentType = getContentType(path);
+    res.setHeader('Content-type',contentType);
+    res.write(fs.readFileSync(path));
+    res.end();
+  } else return;
+}
+
+const logError = (error) => {
+  if (error) return;
+};
+
+const redirectToGuestBook = (req,res) => {
+  res.redirect('/guestBook.html');
+  res.end();
+}
+
 let app = WebApp.create();
 app.use(logRequest);
 app.use(serveFile);
+app.post('/commentPage',redirectToGuestBook);
 
 const PORT = 5000;
 let server = http.createServer(app);
