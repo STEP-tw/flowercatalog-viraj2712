@@ -3,9 +3,6 @@ const http = require('http');
 const WebApp = require('./webapp');
 let toS = o => JSON.stringify(o, null, 2);
 
-let comments = fs.readFileSync('data/comments.json', 'utf8');
-comments = JSON.parse(comments);
-
 let logRequest = (req, res) => {
   let text = ['------------------------------',
     `${new Date().toLocaleTimeString()}`,
@@ -46,13 +43,18 @@ let serveFile = function(req, res) {
   } else return;
 }
 
-const logError = (error) => {
-  if (error) return;
-};
+const saveComments = (req,res) => {
+  let data = req.body;
+  if(!data.name && !data.comment) return;
+  data.date = new Date().toLocaleTimeString();
+  let dataToSave = JSON.stringify(data,['date','name','comment'],2);
+  fs.writeFileSync('data/comments.json',dataToSave);
+}
 
 const redirectToGuestBook = (req,res) => {
   res.redirect('/guestBook.html');
   res.end();
+  saveComments(req,res)
 }
 
 let app = WebApp.create();

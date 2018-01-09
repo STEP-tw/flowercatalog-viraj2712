@@ -5,17 +5,21 @@ const toKeyValue = kv => {
     value: parts[1].trim()
   };
 };
+
 const accumulate = (o, kv) => {
   o[kv.key] = kv.value;
   return o;
 };
+
 const parseBody = text => text && text.split('&').map(toKeyValue).reduce(accumulate, {}) || {};
+
 let redirect = function(path) {
   console.log(`redirecting to ${path}`);
   this.statusCode = 302;
   this.setHeader('location', path);
   this.end();
 };
+
 const parseCookies = text => {
   try {
     return text && text.split(';').map(toKeyValue).reduce(accumulate, {}) || {};
@@ -23,6 +27,7 @@ const parseCookies = text => {
     return {};
   }
 }
+
 let invoke = function(req, res) {
   let handler = this._handlers[req.method][req.url];
   if (!handler) {
@@ -33,6 +38,7 @@ let invoke = function(req, res) {
   }
   handler(req, res);
 }
+
 const initialize = function() {
   this._handlers = {
     GET: {},
@@ -40,27 +46,39 @@ const initialize = function() {
   };
   this._preprocess = [];
 };
+
 const get = function(url, handler) {
   this._handlers.GET[url] = handler;
 }
+
 const post = function(url, handler) {
   this._handlers.POST[url] = handler;
 };
+
 const use = function(handler) {
   this._preprocess.push(handler);
 };
+
 let urlIsOneOf = function(urls) {
   return urls.includes(this.url);
 }
+
 const main = function(req, res) {
-  console.log(req.headers);
   res.redirect = redirect.bind(res);
-  this._preprocess.forEach(middleware => {
+  req.urlIsOneOf = urlIsOneOf.bind(req);
+  req.cookies = parseCookies(req.headers.cookie||'');
+  let content = "";
+  req.on('data', data => content += data.toString())
+  req.on('end', () => {
+    req.body = parseBody(content);
+    content = "";
+    this._preprocess.forEach(middleware => {
+      if (res.finished) return;
+      middleware(req, res);
+    });
     if (res.finished) return;
-    middleware(req, res);
+    invoke.call(this, req, res);
   });
-  if (res.finished) return;
-  invoke.call(this, req, res);
 };
 
 let create = () => {
