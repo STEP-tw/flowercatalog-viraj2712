@@ -12,6 +12,14 @@ let registered_users = [{
   {
     userName: 'omkar',
     name: 'Omkar Mote'
+  },
+  {
+    userName: 'harshad',
+    name: 'Harshad Thombare'
+  },
+  {
+    userName: 'ketan',
+    name: 'Ketan Sangle'
   }
 ];
 
@@ -64,10 +72,11 @@ let serveFile = function(req, res) {
 }
 
 const toHtml = function(comment) {
+  let line = `----------------------------------------------`;
   let dateAndTime = `<p>Time : ${comment.date} ${comment.time}</p>`
   let userName = `<p>Name : ${comment.name}</p>`;
   let userComment = `<p>Comment : ${comment.comment}</p><br>`;
-  return `${dateAndTime} ${userName} ${userComment}`;
+  return `${line} ${dateAndTime} ${userName} ${userComment}`;
 }
 
 const storeCommentInFile = function(comments) {
