@@ -83,7 +83,7 @@ const getComment = function(req) {
   return data;
 }
 
-const storeComments = (req) => {
+const storeComments = function(req) {
   let data = getComment(req);
   let comments = fs.readFileSync('data/comments.json', 'utf8');
   comments = JSON.parse(comments);
@@ -98,7 +98,7 @@ const redirectToGuestBook = (req, res) => {
   res.redirect('/guestBook');
 }
 
-const redirectLoggedInToAddComment = function(req, res) {
+const redirectLoggedInToAddComment = (req, res) => {
   if (req.user) {
     let content = guestBook.replace('User', `User : ${req.user.name}`);
     res.write(content);
@@ -129,6 +129,12 @@ const checkForRegisteredUsers = (req, res) => {
   res.redirect('/guestBookPage');
 }
 
+const removeUser = (req,res) => {
+  res.setHeader('Set-Cookie',[`loginFailed=false; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`,`sessionid=0 ; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`]);
+  delete req.user.sessionid;
+  res.redirect('/index.html');
+}
+
 let app = WebApp.create();
 app.use(logRequest);
 app.use(loadUser);
@@ -137,6 +143,7 @@ app.get('/guestBook', redirectUserToLogin);
 app.get('/guestBookPage', redirectLoggedInToAddComment);
 app.post('/commentPage', redirectToGuestBook);
 app.post('/login', checkForRegisteredUsers);
+app.get('/logout',removeUser);
 
 const PORT = 5000;
 let server = http.createServer(app);

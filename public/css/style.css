@@ -144,3 +144,9 @@ h4 {
 h5 {
   font-size: 25px;
 }
+
+h6 {
+  font-size: 20px;
+  margin: 0px 130px 0px 0px;
+  text-align: right;
+}
