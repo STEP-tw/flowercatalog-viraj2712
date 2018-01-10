@@ -95,12 +95,12 @@ const storeComments = (req) => {
 
 const redirectToGuestBook = (req, res) => {
   storeComments(req)
-  res.redirect('/guestBook.html');
+  res.redirect('/guestBook');
 }
 
 const redirectLoggedInToAddComment = function(req, res) {
   if (req.user) {
-    let content = guestBook.replace('currentUser', `User : ${req.user.name}`);
+    let content = guestBook.replace('User', `User : ${req.user.name}`);
     res.write(content);
     res.end();
   }
@@ -110,19 +110,13 @@ const redirectUserToLogin = (req, res) => {
   if (!req.user) {
     res.redirect('/loginWithComments.html');
   } else {
-    res.redirect('/guestBook.html');
+    let content = guestBook.replace('User', `User : ${req.user.name}`);
+    res.write(content);
+    res.end();
   }
 }
 
-let app = WebApp.create();
-app.use(logRequest);
-app.use(loadUser);
-app.use(serveFile);
-app.get('/guestBook', redirectUserToLogin);
-app.get('/guestBookPage', redirectLoggedInToAddComment);
-app.post('/commentPage', redirectToGuestBook);
-
-app.post('/login', (req, res) => {
+const checkForRegisteredUsers = (req, res) => {
   let user = registered_users.find(u => u.userName == req.body.name)
   if (!user) {
     res.setHeader('Set-Cookie', `logInFailed=true`);
@@ -133,7 +127,16 @@ app.post('/login', (req, res) => {
   res.setHeader('Set-Cookie', `sessionid=${sessionid}`);
   user.sessionid = sessionid;
   res.redirect('/guestBookPage');
-});
+}
+
+let app = WebApp.create();
+app.use(logRequest);
+app.use(loadUser);
+app.use(serveFile);
+app.get('/guestBook', redirectUserToLogin);
+app.get('/guestBookPage', redirectLoggedInToAddComment);
+app.post('/commentPage', redirectToGuestBook);
+app.post('/login', checkForRegisteredUsers);
 
 const PORT = 5000;
 let server = http.createServer(app);
