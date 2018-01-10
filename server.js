@@ -43,14 +43,32 @@ let serveFile = function(req, res) {
   } else return;
 }
 
-const storeComments = (req,res) => {
+const toHtml = function(comment){
+  let dateAndTime = `<p>Time : ${comment.date} ${comment.time}</p>`
+  let userName = `<p>Name : ${comment.name}</p>`;
+  let userComment = `<p>Comment : ${comment.comment}</p><br>`;
+  return `${dateAndTime} ${userName} ${userComment}`;
+}
+
+const storeCommentInFile = function(comments){
+  let allComments = comments.map(toHtml).join('\n');
+  fs.writeFileSync('public/comments.html',allComments);
+}
+
+const getComment = function(req){
   let data = req.body;
   if(!data.name && !data.comment) return;
-  data.date = new Date().toDateString();
   data.time = new Date().toLocaleTimeString();
+  data.date = new Date().toDateString();
+  return data;
+}
+
+const storeComments = (req,res) => {
+  let data = getComment(req);
   let comments = fs.readFileSync('data/comments.json','utf8');
   comments = JSON.parse(comments);
   comments.unshift(data);
+  storeCommentInFile(comments);
   let commentsToStore = JSON.stringify(comments,null,2);
   fs.writeFileSync('data/comments.json',commentsToStore);
 }
